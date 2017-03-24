@@ -1,5 +1,6 @@
 package info.androidhive.cardview;
 
+import android.app.DatePickerDialog;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -7,6 +8,7 @@ import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.graphics.Rect;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.design.widget.FloatingActionButton;
@@ -22,6 +24,7 @@ import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -29,14 +32,23 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
+import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity {
     final Context context = this;
     private RecyclerView recyclerView;
     private AlbumsAdapter adapter;
-    private List<Album> albumList;
+    private ArrayList<Album> albumList;
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        outState.putParcelableArrayList("key", albumList);
+        super.onSaveInstanceState(outState);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,7 +69,15 @@ public class MainActivity extends AppCompatActivity {
 
         recyclerView = (RecyclerView) findViewById(R.id.recycler_view);
 
-        albumList = new ArrayList<>();
+
+        if(savedInstanceState == null || !savedInstanceState.containsKey("key")) {
+            albumList = new ArrayList<>();
+        }
+        else {
+            albumList = savedInstanceState.getParcelableArrayList("key");
+            Album.numOfObj = albumList.size();
+        }
+
         adapter = new AlbumsAdapter(this, albumList);
 
         RecyclerView.LayoutManager mLayoutManager = new GridLayoutManager(this, 2);
@@ -79,7 +99,7 @@ public class MainActivity extends AppCompatActivity {
         final String[] result = {""};
         // get prompts.xml view
         LayoutInflater li = LayoutInflater.from(context);
-        View promptsView = li.inflate(R.layout.dialog, null);
+        final View promptsView = li.inflate(R.layout.dialog, null);
 
         AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
                 context);
@@ -90,9 +110,12 @@ public class MainActivity extends AppCompatActivity {
         final EditText userInput = (EditText) promptsView
                 .findViewById(R.id.username);
 
+        final EditText userInputDate = (EditText) promptsView
+                .findViewById(R.id.datepick);
+
         // set dialog message
         alertDialogBuilder
-                .setCancelable(false)
+                //.setCancelable(false)
                 .setPositiveButton("שלח",
                         new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int id) {
@@ -102,7 +125,7 @@ public class MainActivity extends AppCompatActivity {
                                 /*Snackbar.make(view, "התזכורת הוספה בהצלחה!", Snackbar.LENGTH_LONG)
                                         .setAction("Action", null).show();*/
                                 Toast.makeText(view.getContext(), "התזכורת הוספה בהצלחה!", Toast.LENGTH_SHORT).show();
-                                Album a = new Album(result[0], 17);
+                                Album a = new Album(result[0], userInputDate.getText().toString());
                                 albumList.add(a);
 
                                 adapter.notifyDataSetChanged();
@@ -120,8 +143,56 @@ public class MainActivity extends AppCompatActivity {
         final AlertDialog alertDialog = alertDialogBuilder.create();
 
 
+
+        setDatePicker(promptsView);
+
         // show it
         alertDialog.show();
+
+    }
+
+    public void setDatePicker(final View promptsView){
+
+        final Calendar myCalendar = Calendar.getInstance();
+
+        final DatePickerDialog.OnDateSetListener date = new DatePickerDialog.OnDateSetListener() {
+
+
+            @Override
+            public void onDateSet(DatePicker view, int year, int monthOfYear,
+                                  int dayOfMonth) {
+                // TODO Auto-generated method stub
+                myCalendar.set(Calendar.YEAR, year);
+                myCalendar.set(Calendar.MONTH, monthOfYear);
+                myCalendar.set(Calendar.DAY_OF_MONTH, dayOfMonth);
+                updateLabel();
+            }
+
+            private void updateLabel() {
+
+                String myFormat = "dd/MM/yy"; //In which you need put here
+                SimpleDateFormat sdf = new SimpleDateFormat(myFormat, Locale.getDefault());
+                final EditText userInputDate = (EditText) promptsView
+                        .findViewById(R.id.datepick);
+                userInputDate.setText(sdf.format(myCalendar.getTime()));
+            }
+        };
+
+        final EditText userInputDate = (EditText) promptsView
+                .findViewById(R.id.datepick);
+        userInputDate.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                // TODO Auto-generated method stub
+                new DatePickerDialog(context, date, myCalendar
+                        .get(Calendar.YEAR), myCalendar.get(Calendar.MONTH),
+                        myCalendar.get(Calendar.DAY_OF_MONTH)).show();
+            }
+        });
+
+
+
 
     }
 
@@ -150,7 +221,7 @@ public class MainActivity extends AppCompatActivity {
         userInput.setText(current_card_text.getText());
         // set dialog message
         alertDialogBuilder
-                .setCancelable(false)
+                //.setCancelable(false)
 
                 .setPositiveButton("שלח",
                         new DialogInterface.OnClickListener() {
