@@ -19,6 +19,7 @@ import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -72,6 +73,8 @@ public class MainActivity extends AppCompatActivity {
 
         if(savedInstanceState == null || !savedInstanceState.containsKey("key")) {
             albumList = new ArrayList<>();
+            TaskRepo repo = new TaskRepo(this);
+            albumList.addAll(repo.getStudentList());
         }
         else {
             albumList = savedInstanceState.getParcelableArrayList("key");
@@ -127,6 +130,9 @@ public class MainActivity extends AppCompatActivity {
                                 Toast.makeText(view.getContext(), "התזכורת הוספה בהצלחה!", Toast.LENGTH_SHORT).show();
                                 Album a = new Album(result[0], userInputDate.getText().toString());
                                 albumList.add(a);
+
+                                TaskRepo repo = new TaskRepo(view.getContext());
+                                repo.insert(a);
 
                                 adapter.notifyDataSetChanged();
 
@@ -214,11 +220,14 @@ public class MainActivity extends AppCompatActivity {
         alertDialogBuilder.setView(promptsView);
 
         final EditText userInput = (EditText) promptsView.findViewById(R.id.username);
+        final EditText userDateInput = (EditText) promptsView.findViewById(R.id.datepick);
         final TextView current_card_text = (TextView)view.findViewById(R.id.title);
+        final TextView current_card_date = (TextView)view.findViewById(R.id.count);
         final TextView current_card_id = (TextView)view.findViewById(R.id.album_card_id);
         final TextView dialogTitle = (TextView) promptsView.findViewById(R.id.myImageViewText);
         dialogTitle.setText("ערוך תזכורת");
         userInput.setText(current_card_text.getText());
+        userDateInput.setText(current_card_date.getText());
         // set dialog message
         alertDialogBuilder
                 //.setCancelable(false)
@@ -229,9 +238,14 @@ public class MainActivity extends AppCompatActivity {
                                 // get user input and set it to result
                                 // edit text
                                 result[0] = userInput.getText().toString();
-
+                                String date = userDateInput.getText().toString();
                                 int card_id =  Integer.parseInt(current_card_id.getText().toString());
+
                                 albumList.get(card_id).setName(result[0]);
+                                albumList.get(card_id).setDate(date);
+
+                                TaskRepo repo = new TaskRepo(view.getContext());
+                                repo.update(albumList.get(card_id));
 
                                 adapter.notifyDataSetChanged();
                                 Toast.makeText(view.getContext(), "התזכורת עודכנה בהצלחה!", Toast.LENGTH_SHORT).show();
@@ -242,6 +256,10 @@ public class MainActivity extends AppCompatActivity {
                             public void onClick(DialogInterface dialog, int id) {
                                 int card_id =  Integer.parseInt(current_card_id.getText().toString());
                                 albumList.remove(card_id);
+
+                                TaskRepo repo = new TaskRepo(view.getContext());
+                                repo.delete(card_id);
+
                                 adapter.notifyDataSetChanged();
                                 Toast.makeText(view.getContext(), "התזכורת נמחקה בהצלחה!", Toast.LENGTH_SHORT).show();
                             }
@@ -256,7 +274,7 @@ public class MainActivity extends AppCompatActivity {
         // create alert dialog
         final AlertDialog alertDialog = alertDialogBuilder.create();
 
-
+        setDatePicker(promptsView);
         // show it
         alertDialog.show();
 
@@ -311,6 +329,10 @@ public class MainActivity extends AppCompatActivity {
                 R.drawable.album10,
                 R.drawable.album11};
 
+
+        //Log.d("@@@@@@@@@@@@@@@@@", repo.getStudentList().get(0).getName().toString());
+
+        //repo.insert(new Album("hi","bye"));
         /*Album a = new Album("True Romance", 13, covers[0]);
         albumList.add(a);
 

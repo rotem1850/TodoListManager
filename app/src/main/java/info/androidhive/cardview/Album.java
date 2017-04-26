@@ -16,6 +16,15 @@ public class Album implements Parcelable {
     public Album() {
     }
 
+
+    public Album(int id, String name, String date, int thumbnail) {
+        this.id = id;
+        this.name = name;
+        this.date = date;
+        this.thumbnail = thumbnail;
+        numOfObj++;
+    }
+
     public Album(String name, String date, int thumbnail) {
         this.id = numOfObj;
         this.name = name;
@@ -37,6 +46,10 @@ public class Album implements Parcelable {
 
     public int getId() {
         return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
     }
 
     public void setName(String name) {
